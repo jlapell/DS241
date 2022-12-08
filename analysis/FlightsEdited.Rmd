@@ -1,0 +1,79 @@
+---
+title: "Homework: Bureau of Transportation"
+author: Joseph LaPell
+date: 2022-9-14
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+thisfile=here("data_raw","DL_SelectFields.zip")
+
+df2019=read_csv(thisfile) %>% clean_names()
+```
+```{r}
+df9=df2019 %>% filter(passengers>0,origin=="LGA")
+df9 %>% ggplot(aes(month)) + geom_bar()
+```
+
+```{r}
+df9 %>% ggplot(aes(month)) + geom_bar(aes(weight=departures_performed))
+```
+
+```{r}
+df9 %>% ggplot(aes(month)) + geom_bar(aes(weight = passengers))
+```
+
+```{r}
+df9 %>% ggplot(aes(month, fill = carrier_name)) + geom_bar(aes(weight = departures_performed))
+```
+
+```{r}
+df10 = df2019 %>% filter(passengers > 0, origin == "LGA" | dest == "LGA")
+
+df10 %>% ggplot(aes(month)) + geom_bar(aes(weight = passengers))
+```
+
+
+```{r}
+df11 = df10 %>% select(month, passengers, seats, carrier_name, dest, origin)
+
+df12 = df10 %>% select(1:5, month, contains("id"))
+
+df13 = df11 %>% mutate(percent_loading = passengers/seats*100)
+
+df13 %>% ggplot(aes(percent_loading)) + 
+  geom_histogram() + facet_wrap(~carrier_name, scales = "free_y")
+```
+
+### Summarize data
+
+```{r}
+df14 = df2019 %>% filter(passengers > 0, origin == "lga" | dest == "LGA" )%>%
+  group_by(month) %>% summarise(total_pass = sum(passengers))
+```
+
+```{r}
+df15 = df2019 %>% filter(passengers > 0, origin == "lga" | dest == "LGA" ) %>%
+  group_by(month) %>% mutate(percent_loading = passengers/seats * 100) %>%
+  summarise(loading = mean(percent_loading))
+```
+
+```{r}
+df16 = df2019 %>% filter(passengers > 0, origin == "lga" | dest == "LGA") %>%
+  group_by(month, carrier_name) %>% mutate(percent_loading = passengers/seats * 100) %>%
+  summarise(loading = mean(percent_loading))
+```
+
+```{r}
+df16 %>% ggplot(aes(x = month, y = loading, color = carrier_name)) + 
+  geom_point() + 
+  theme_minimal() + geom_line() +
+  theme(legend.position = "bottom")
+```
+
